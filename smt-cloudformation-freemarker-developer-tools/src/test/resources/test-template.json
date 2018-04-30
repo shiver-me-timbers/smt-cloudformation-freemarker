@@ -1,0 +1,81 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "test description",
+  "Metadata": {
+    "test-metadata-name": "test-metadata-name"
+  },
+  "Parameters": {
+    "TestParameter1": {
+      "Type": "String",
+      "Description": "test parameter 1 description",
+      "Default": "test default value",
+      "NoEcho": true,
+      "AllowedPattern": "[a-z ]+",
+      "AllowedValues": [
+        "test default value",
+        "another test default value"
+      ],
+      "ConstraintDescription": "this is a test parameter so have contrived to use all the options",
+      "MinLength": 1,
+      "MaxLength": 100
+    },
+    "TestParameter2": {
+      "Type": "Number",
+      "MinValue": 1,
+      "MaxValue": 100
+    }
+  },
+  "Mappings": {
+    "TestMapping": {
+      "test_map": {
+        "one": "1"
+      }
+    }
+  },
+  "Conditions": {
+    "TestCondition": {
+      "Fn::Equals": [
+        {
+          "Ref": "TestParameter1"
+        },
+        "a test value"
+      ]
+    }
+  },
+  "Resources": {
+    "TestResource1": {
+      "Type": "AWS::SSM::Parameter",
+      "DependsOn": [
+        "TestResource2"
+      ],
+      "Condition": "TestCondition",
+      "Properties": {
+        "Name": "test_parameter1",
+        "Type": "String",
+        "Value": "a test parameter value"
+      }
+    },
+    "TestResource2": {
+      "Type": "AWS::SSM::Parameter",
+      "Properties": {
+        "Name": "test_parameter2",
+        "Type": "String",
+        "Value": "another test parameter value"
+      }
+    }
+  },
+  "Outputs": {
+    "TestOutput1": {
+      "Description": "This is a test output value.",
+      "Value": "a test output value",
+      "Condition": "TestCondition",
+      "Export": {
+        "Name": "TestExport"
+      }
+    },
+    "TestOutput2": {
+      "Value": "another test output value"
+    }
+  }
+}
+
