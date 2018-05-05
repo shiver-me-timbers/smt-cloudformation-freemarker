@@ -12,7 +12,7 @@
   -- @param last: true if this is the las resource in the list. This will prevent the trailing comma from being printed.
   -- @param repository_description: A description about the AWS CodeCommit repository.
   -- @param triggers: a list of <@code_commit_trigger/> directives that define the actions to take in response to events
-                      that occur in the repository.
+  --                  that occur in the repository.
   -->
 <#macro code_commit
 repository_name
