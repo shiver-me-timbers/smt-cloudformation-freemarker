@@ -41,6 +41,15 @@
 
     <url>https://github.com/shiver-me-timbers/smt-cf-core-freemarker/</url>
 
+    <profiles>
+        <profile>
+            <id>test-build</id>
+            <modules>
+                <module>smt-cloudformation-freemarker-build</module>
+            </modules>
+        </profile>
+    </profiles>
+
     <build>
         <resources>
             <resource>
