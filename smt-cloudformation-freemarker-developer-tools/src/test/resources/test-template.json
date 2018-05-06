@@ -1,81 +1,558 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
   "Description": "test description",
-  "Metadata": {
-    "test-metadata-name": "test-metadata-name"
-  },
-  "Parameters": {
-    "TestParameter1": {
-      "Type": "String",
-      "Description": "test parameter 1 description",
-      "Default": "test default value",
-      "NoEcho": true,
-      "AllowedPattern": "[a-z ]+",
-      "AllowedValues": [
-        "test default value",
-        "another test default value"
-      ],
-      "ConstraintDescription": "this is a test parameter so have contrived to use all the options",
-      "MinLength": 1,
-      "MaxLength": 100
-    },
-    "TestParameter2": {
-      "Type": "Number",
-      "MinValue": 1,
-      "MaxValue": 100
-    }
-  },
-  "Mappings": {
-    "TestMapping": {
-      "test_map": {
-        "one": "1"
-      }
-    }
-  },
-  "Conditions": {
-    "TestCondition": {
-      "Fn::Equals": [
-        {
-          "Ref": "TestParameter1"
-        },
-        "a test value"
-      ]
-    }
-  },
   "Resources": {
-    "TestResource1": {
-      "Type": "AWS::SSM::Parameter",
+    "CodeCommit": {
+      "Type": "AWS::CodeCommit::Repository",
+      "Properties": {
+        "RepositoryName": "test_code_commit",
+        "RepositoryDescription": "test code commit description",
+        "Triggers": [
+          {
+            "Name": "test_code_commit_trigger",
+            "Branches": [
+              "master",
+              "test_branch"
+            ],
+            "CustomData": "some stuff to send along with the trigger",
+            "DestinationArn": "test_arn_for_code_pipeline",
+            "Events": [
+              "all"
+            ]
+          }
+        ]
+      }
+    },
+    "CodePipeline": {
+      "Type": "AWS::CodePipeline::Pipeline",
       "DependsOn": [
-        "TestResource2"
+        "CodeCommit",
+        "CodeBuild",
+        "CodeTest"
       ],
-      "Condition": "TestCondition",
       "Properties": {
-        "Name": "test_parameter1",
-        "Type": "String",
-        "Value": "a test parameter value"
+        "ArtifactStore": {
+          "Location": "test_bucket",
+          "Type": "S3",
+          "EncryptionKey": {
+            "Id": "test_encryption_key",
+            "Type": "KMS"
+          }
+        },
+        "RoleArn": "test_pipeline_role_arn",
+        "Name": "CodePipeline",
+        "DisableInboundStageTransitions": [
+          {
+            "StageName": "Deploy",
+            "Reason": "disabled as test"
+          }
+        ],
+        "RestartExecutionOnUpdate": true,
+        "Stages": [
+          {
+            "Name": "Source",
+            "Actions": [
+              {
+                "Name": "Source",
+                "ActionTypeId": {
+                  "Category": "Source",
+                  "Owner": "AWS",
+                  "Provider": "CodeCommit",
+                  "Version": "1"
+                },
+                "Configuration": {
+                  "RepositoryName": "test_code_commit_repo",
+                  "BranchName": "master",
+                  "PollForSourceChanges": true
+                },
+                "OutputArtifacts": [
+                  {
+                    "Name": "source_code_output_artifact"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "Name": "Build",
+            "Actions": [
+              {
+                "Name": "Build",
+                "ActionTypeId": {
+                  "Category": "Build",
+                  "Owner": "AWS",
+                  "Provider": "CodeBuild",
+                  "Version": "1"
+                },
+                "Configuration": {
+                  "ProjectName": "code_build"
+                },
+                "InputArtifacts": [
+                  {
+                    "Name": "source_code_output_artifact"
+                  }
+                ],
+                "OutputArtifacts": [
+                  {
+                    "Name": "build_output_artifact"
+                  }
+                ],
+                "RoleArn": "build_role",
+                "RunOrder": 1
+              },
+              {
+                "Name": "Test",
+                "ActionTypeId": {
+                  "Category": "Test",
+                  "Owner": "AWS",
+                  "Provider": "CodeBuild",
+                  "Version": "1"
+                },
+                "Configuration": {
+                  "ProjectName": "code_test"
+                },
+                "InputArtifacts": [
+                  {
+                    "Name": "build_output_artifact"
+                  }
+                ],
+                "RoleArn": "build_role",
+                "RunOrder": 2
+              }
+            ]
+          },
+          {
+            "Name": "Deploy",
+            "Actions": [
+              {
+                "Name": "CreateChangeSet",
+                "ActionTypeId": {
+                  "Category": "Deploy",
+                  "Owner": "AWS",
+                  "Provider": "CloudFormation",
+                  "Version": "1"
+                },
+                "Configuration": {
+                  "StackName": "test_stack_name",
+                  "ActionMode": "CHANGE_SET_REPLACE",
+                  "Capabilities": "CAPABILITY_NAMED_IAM",
+                  "ChangeSetName": "test_change_set_name",
+                  "TemplatePath": "build_output_artifact::template.json",
+                  "TemplateConfiguration": "template_config.json",
+                  "RoleArn": "deploy_role"
+                },
+                "InputArtifacts": [
+                  {
+                    "Name": "build_output_artifact"
+                  }
+                ],
+                "RoleArn": "deploy_role",
+                "RunOrder": 1
+              },
+              {
+                "Name": "DeployChangeSet",
+                "ActionTypeId": {
+                  "Category": "Deploy",
+                  "Owner": "AWS",
+                  "Provider": "CloudFormation",
+                  "Version": "1"
+                },
+                "Configuration": {
+                  "StackName": "test_stack_name",
+                  "ActionMode": "CHANGE_SET_EXECUTE",
+                  "ChangeSetName": "test_change_set_name",
+                  "OutputFileName": "template_output.json",
+                  "RoleArn": "deploy_role"
+                },
+                "OutputArtifacts": [
+                  {
+                    "Name": "deploy_output_artifact"
+                  }
+                ],
+                "RoleArn": "deploy_role",
+                "RunOrder": 2
+              }
+            ]
+          }
+        ]
       }
     },
-    "TestResource2": {
-      "Type": "AWS::SSM::Parameter",
+    "CodeBuild": {
+      "Type": "AWS::CodeBuild::Project",
       "Properties": {
-        "Name": "test_parameter2",
-        "Type": "String",
-        "Value": "another test parameter value"
-      }
-    }
-  },
-  "Outputs": {
-    "TestOutput1": {
-      "Description": "This is a test output value.",
-      "Value": "a test output value",
-      "Condition": "TestCondition",
-      "Export": {
-        "Name": "TestExport"
+        "Name": "code_build",
+        "Source": {
+          "Type": "CODEPIPELINE",
+          "GitCloneDepth": 0,
+          "BuildSpec": {
+            "Fn::Join": [
+              "\n",
+              [
+                "version: 0.2",
+                "",
+                "phases:",
+                "  build:",
+                "    commands:",
+                "      - mvn clean compile",
+                "cache:",
+                "  paths:",
+                "    - '/root/.m2/repository/**/*'",
+                "artifacts:",
+                "  files:",
+                "    - '**/*'"
+              ]
+            ]
+          }
+        },
+        "Environment": {
+          "Type": "LINUX_CONTAINER",
+          "ComputeType": "BUILD_GENERAL1_SMALL",
+          "Image": "aws/codebuild/eb-java-8-amazonlinux-64:2.4.3",
+          "EnvironmentVariables": [
+            {
+              "Name": "TEST",
+              "Value": "test value",
+              "Type": "PLAINTEXT"
+            }
+          ],
+          "PrivilegedMode": true
+        },
+        "ServiceRole": "build_role",
+        "Artifacts": {
+          "Type": "CODEPIPELINE"
+        },
+        "Cache": {
+          "Type": "S3",
+          "Location": "test_bucket/cache/build"
+        },
+        "Description": "Build Project",
+        "Tags": [
+          {
+            "Key": "test_tag",
+            "Value": "Test tag value."
+          }
+        ]
       }
     },
-    "TestOutput2": {
-      "Value": "another test output value"
+    "CodeTest": {
+      "Type": "AWS::CodeBuild::Project",
+      "Properties": {
+        "Name": "code_test",
+        "Source": {
+          "Type": "CODEPIPELINE",
+          "GitCloneDepth": 0,
+          "BuildSpec": {
+            "Fn::Join": [
+              "\n",
+              [
+                "version: 0.2",
+                "",
+                "phases:",
+                "  build:",
+                "    commands:",
+                "      - mvn clean test",
+                "cache:",
+                "  paths:",
+                "    - '/root/.m2/repository/**/*'",
+                "artifacts:",
+                "  files:",
+                "    - '**/*'"
+              ]
+            ]
+          }
+        },
+        "Environment": {
+          "Type": "LINUX_CONTAINER",
+          "ComputeType": "BUILD_GENERAL1_SMALL",
+          "Image": "aws/codebuild/eb-java-8-amazonlinux-64:2.4.3"
+        },
+        "ServiceRole": "build_role",
+        "Artifacts": {
+          "Type": "CODEPIPELINE"
+        },
+        "Cache": {
+          "Type": "S3",
+          "Location": "test_bucket/cache/build"
+        },
+        "Description": "Test Project",
+        "VpcConfig": {
+          "VpcId": "test_vpc_id",
+          "Subnets": [
+            "test_subnet_id1",
+            "test_subnet_id2",
+            "test_subnet_id3"
+          ],
+          "SecurityGroupIds": [
+            "test_security_group_id1",
+            "test_security_group_id2",
+            "test_security_group_id3"
+          ]
+        }
+      }
+    },
+    "GitHubPipeline": {
+      "Type": "AWS::CodePipeline::Pipeline",
+      "Properties": {
+        "ArtifactStore": {
+          "Location": "test_bucket",
+          "Type": "S3",
+          "EncryptionKey": {
+            "Id": "test_encryption_key",
+            "Type": "KMS"
+          }
+        },
+        "RoleArn": "test_pipeline_role_arn",
+        "Name": "GitHubPipeline",
+        "DisableInboundStageTransitions": [
+          {
+            "StageName": "Deploy",
+            "Reason": "disabled as test"
+          }
+        ],
+        "RestartExecutionOnUpdate": true,
+        "Stages": [
+          {
+            "Name": "Source",
+            "Actions": [
+              {
+                "Name": "Source",
+                "ActionTypeId": {
+                  "Category": "Source",
+                  "Owner": "ThirdParty",
+                  "Provider": "GitHub",
+                  "Version": "1"
+                },
+                "Configuration": {
+                  "Owner": "test_owner",
+                  "Repo": "test_repo",
+                  "Branch": "test_branch",
+                  "OAuthToken": "test_oauth_token",
+                  "PollForSourceChanges": false
+                },
+                "OutputArtifacts": [
+                  {
+                    "Name": "source_code_output_artifact"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "Name": "Build",
+            "Actions": [
+              {
+                "Name": "Build",
+                "ActionTypeId": {
+                  "Category": "Build",
+                  "Owner": "Custom",
+                  "Provider": "jenkins_build_provider",
+                  "Version": "1"
+                },
+                "Configuration": {
+                  "ProjectName": "jenkins_build"
+                },
+                "InputArtifacts": [
+                  {
+                    "Name": "source_code_output_artifact"
+                  }
+                ],
+                "OutputArtifacts": [
+                  {
+                    "Name": "build_output_artifact"
+                  }
+                ],
+                "RunOrder": 1
+              },
+              {
+                "Name": "Test",
+                "ActionTypeId": {
+                  "Category": "Test",
+                  "Owner": "Custom",
+                  "Provider": "jenkins_test_provider",
+                  "Version": "1"
+                },
+                "Configuration": {
+                  "ProjectName": "jenkins_test"
+                },
+                "RunOrder": 2
+              }
+            ]
+          },
+          {
+            "Name": "Deploy",
+            "Actions": [
+              {
+                "Name": "ManualDeploy",
+                "ActionTypeId": {
+                  "Category": "Approval",
+                  "Owner": "AWS",
+                  "Provider": "Manual",
+                  "Version": "1"
+                },
+                "RunOrder": 1
+              },
+              {
+                "Name": "DeployApplication",
+                "ActionTypeId": {
+                  "Category": "Deploy",
+                  "Owner": "AWS",
+                  "Provider": "CodeDeploy",
+                  "Version": "1"
+                },
+                "Configuration": {
+                  "ApplicationName": "deploy_application_name",
+                  "DeploymentGroupName": "deploy_group_name"
+                },
+                "InputArtifacts": [
+                  {
+                    "Name": "build_output_artifact"
+                  }
+                ],
+                "RunOrder": 2
+              },
+              {
+                "Name": "DeployConfiguration",
+                "ActionTypeId": {
+                  "Category": "Deploy",
+                  "Owner": "AWS",
+                  "Provider": "OpsWorks",
+                  "Version": "1"
+                },
+                "Configuration": {
+                  "Stack": "ops_works_stack",
+                  "App": "ops_works_app",
+                  "Layer": "ops_works_layer"
+                },
+                "InputArtifacts": [
+                  {
+                    "Name": "build_output_artifact"
+                  }
+                ],
+                "RunOrder": 3
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "S3Pipeline": {
+      "Type": "AWS::CodePipeline::Pipeline",
+      "Properties": {
+        "ArtifactStore": {
+          "Location": "test_bucket",
+          "Type": "S3",
+          "EncryptionKey": {
+            "Id": "test_encryption_key",
+            "Type": "KMS"
+          }
+        },
+        "RoleArn": "test_pipeline_role_arn",
+        "Name": "S3Pipeline",
+        "DisableInboundStageTransitions": [
+          {
+            "StageName": "Deploy",
+            "Reason": "disabled as test"
+          }
+        ],
+        "RestartExecutionOnUpdate": true,
+        "Stages": [
+          {
+            "Name": "Source",
+            "Actions": [
+              {
+                "Name": "Source",
+                "ActionTypeId": {
+                  "Category": "Source",
+                  "Owner": "AWS",
+                  "Provider": "S3",
+                  "Version": "1"
+                },
+                "Configuration": {
+                  "S3Bucket": "source_s3_bucket",
+                  "S3ObjectKey": "test/s3/source.zip",
+                  "PollForSourceChanges": false
+                },
+                "OutputArtifacts": [
+                  {
+                    "Name": "source_code_output_artifact"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "Name": "Build",
+            "Actions": [
+              {
+                "Name": "Build",
+                "ActionTypeId": {
+                  "Category": "Invoke",
+                  "Owner": "AWS",
+                  "Provider": "Lambda",
+                  "Version": "1"
+                },
+                "Configuration": {
+                  "FunctionName": "lambda_build_function"
+                },
+                "InputArtifacts": [
+                  {
+                    "Name": "source_code_output_artifact"
+                  }
+                ],
+                "OutputArtifacts": [
+                  {
+                    "Name": "build_output_artifact"
+                  }
+                ],
+                "RunOrder": 1
+              }
+            ]
+          },
+          {
+            "Name": "Deploy",
+            "Actions": [
+              {
+                "Name": "DeployApplication",
+                "ActionTypeId": {
+                  "Category": "Deploy",
+                  "Owner": "AWS",
+                  "Provider": "ECS",
+                  "Version": "1"
+                },
+                "Configuration": {
+                  "ClusterName": "test_cluster_name",
+                  "ServiceName": "test_service_name"
+                },
+                "InputArtifacts": [
+                  {
+                    "Name": "build_output_artifact"
+                  }
+                ],
+                "RunOrder": 2
+              },
+              {
+                "Name": "DeployConfiguration",
+                "ActionTypeId": {
+                  "Category": "Deploy",
+                  "Owner": "AWS",
+                  "Provider": "ElasticBeanstalk",
+                  "Version": "1"
+                },
+                "Configuration": {
+                  "ApplicationName": "test_eb_application_name",
+                  "EnvironmentName": "test_eb_environment_name"
+                },
+                "InputArtifacts": [
+                  {
+                    "Name": "build_output_artifact"
+                  }
+                ],
+                "RunOrder": 3
+              }
+            ]
+          }
+        ]
+      }
     }
   }
 }
-

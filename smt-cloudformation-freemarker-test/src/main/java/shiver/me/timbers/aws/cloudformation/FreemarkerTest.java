@@ -54,7 +54,11 @@ public class FreemarkerTest {
     }
 
     private String normalise(String string) {
-        return string.replaceAll(System.lineSeparator(), "").replaceAll(" +", "").trim();
+        return string.replaceAll(System.lineSeparator(), "")
+                .replaceAll("\\s\\s+", "")
+                .replaceAll("\\s*:\\s*", ":")
+                .replaceAll("\\s,", ",")
+                .trim();
     }
 
     private String toString(String path) throws IOException {

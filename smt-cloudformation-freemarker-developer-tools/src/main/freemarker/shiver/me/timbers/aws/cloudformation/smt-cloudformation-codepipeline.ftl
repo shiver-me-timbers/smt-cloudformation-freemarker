@@ -37,16 +37,16 @@ restart_execution_on_update=false
     condition=condition
     last=last
     >
-    "ArtifactStore" : ${artifact_store},
-    "RoleArn" : "${role_arn},
-    "Name" : "${name}"<#if disable_inbound_stage_transitions?has_content>,
-    "DisableInboundStageTransitions" : [
+    "ArtifactStore": ${artifact_store},
+    "RoleArn": "${role_arn}",
+    "Name": "${name}"<#if disable_inbound_stage_transitions?has_content>,
+    "DisableInboundStageTransitions": [
         <#list disable_inbound_stage_transitions as transition>
             ${transition}
         </#list>
     ]</#if><#if restart_execution_on_update>,
-    "RestartExecutionOnUpdate" : ${restart_execution_on_update?c}</#if>,
-    "Stages" : [
+    "RestartExecutionOnUpdate": ${restart_execution_on_update?c}</#if>,
+    "Stages": [
         <#nested/>
     ]
     </@cf.resource>
@@ -59,16 +59,19 @@ restart_execution_on_update=false
   --
   -- @param location: the location where AWS CodePipeline stores artifacts for a pipeline, such as an S3 bucket.
   -- @param type: the type of the artifact store, such as Amazon S3. Valid values ("S3").
-  -- @param encryption_key: the encryption key AWS CodePipeline uses to encrypt the data in the artifact store.
+  -- @param encryption_key: an <@code_pipeline_artifact_store_encryption_key/> directiove that defines the encryption
+  --                        key AWS CodePipeline uses to encrypt the data in the artifact store.
   -->
 <#macro code_pipeline_artifact_store
 location
 type="S3"
 encryption_key=""
 >
-  "Location" : "${location}",
-  "Type" : "${type}"<#if encryption_key?has_content>,
-  "EncryptionKey" : ${encryption_key}</#if>
+{
+  "Location": "${location}",
+  "Type": "${type}"<#if encryption_key?has_content>,
+  "EncryptionKey": ${encryption_key}</#if>
+}
 </#macro>
 
 <#--
@@ -83,8 +86,10 @@ encryption_key=""
 id
 type="KMS"
 >
-  "Id" : "${id}",
-  "Type" : "${type}"
+{
+  "Id": "${id}",
+  "Type": "${type}"
+}
 </#macro>
 
 <#--
@@ -99,8 +104,10 @@ type="KMS"
 stage_name
 reason
 >
-  "StageName" : "${stage_name}",
-  "Reason" : "${reason}"
+{
+  "StageName": "${stage_name}",
+  "Reason": "${reason}"
+}
 </#macro>
 
 <#--
@@ -115,18 +122,20 @@ reason
   -->
 <#macro code_pipeline_stage
 name
-actions
 blockers=[]
+last=false
 >
-  "Name" : "${name}",
-  "Actions" : [
+{
+  "Name": "${name}",
+  "Actions": [
     <#nested/>
   ]<#if blockers?has_content>,
-  "Blockers" : [
+  "Blockers": [
     <#list blockers as blocker>
         ${blocker}
     </#list>
   ]</#if>
+}<#if !last>,</#if>
 </#macro>
 
 <#--
@@ -153,25 +162,28 @@ input_artifacts=[]
 output_artifacts=[]
 role_arn=""
 run_order=0
+last=false
 >
     <#assign configuration>
         <#nested/>
     </#assign>
-  "Name" : "${name}",
-  "ActionTypeId" : ${action_type_id}<#if configuration?has_content>,
-  "Configuration" ${configuration}: </#if><#if input_artifacts?has_content>,
-  "InputArtifacts" : [
+{
+  "Name": "${name}",
+  "ActionTypeId": ${action_type_id}<#if configuration?has_content>,
+  "Configuration": ${configuration}</#if><#if input_artifacts?has_content && input_artifacts[0]?has_content>,
+  "InputArtifacts": [
     <#list input_artifacts as artifact>
         ${artifact}
     </#list>
-  ]</#if><#if output_artifacts?has_content>,
-  "OutputArtifacts" : [
+  ]</#if><#if output_artifacts?has_content && output_artifacts[0]?has_content>,
+  "OutputArtifacts": [
     <#list output_artifacts as artifact>
         ${artifact}
     </#list>
   ]</#if><#if role_arn?has_content>,
-  "RoleArn" : "${role_arn}"</#if><#if run_order gt 0>,
-  "RunOrder" : ${run_order}</#if>
+  "RoleArn": "${role_arn}"</#if><#if run_order gt 0>,
+  "RunOrder": ${run_order}</#if>
+}<#if !last>,</#if>
 </#macro>
 
 <#--
@@ -192,10 +204,10 @@ provider
 version
 >
 {
-  "Category" : "${category}",
-  "Owner" : "${owner}",
-  "Provider" : "${provider}",
-  "Version" : "${version}"
+  "Category": "${category}",
+  "Owner": "${owner}",
+  "Provider": "${provider}",
+  "Version": "${version}"
 }
 </#macro>
 
@@ -211,7 +223,7 @@ version
 name
 >
 {
-  "Name" : "${name}"
+  "Name": "${name}"
 }
 </#macro>
 
@@ -228,7 +240,7 @@ name
 type
 >
 {
-  "Name" : "${name}",
-  "Type" : "${type}"
+  "Name": "${name}",
+  "Type": "${type}"
 }
 </#macro>

@@ -30,9 +30,9 @@ triggers=[]
     condition=condition
     last=last
     >
-    "RepositoryName" : "${repository_name}<#if repository_description?has_content>,
-    "RepositoryDescription" : "${repository_description}"</#if><#if triggers?has_content>,
-    "Triggers" : [
+    "RepositoryName": "${repository_name}"<#if repository_description?has_content>,
+    "RepositoryDescription": "${repository_description}"</#if><#if triggers?has_content>,
+    "Triggers": [
         <#list triggers as trigger>
             ${trigger}
         </#list>
@@ -55,17 +55,17 @@ triggers=[]
   -->
 <#macro code_commit_trigger name branches=[] custom_data="" destination_arn="" events=[]>
       {
-        "Name" : "${name}"<#if branches?has_content>,
-        "Branches" : [
+        "Name": "${name}"<#if branches?has_content>,
+        "Branches": [
     <#list branches as branch>
-          "${branch}"
+          "${branch}"<#if !branch?is_last>,</#if>
     </#list>
         ]</#if><#if custom_data?has_content>,
-        "CustomData" : "${custom_data}"</#if><#if destination_arn?has_content>,
-        "DestinationArn" : "${destination_arn}"</#if><#if events?has_content>,
-        "Events" : [
+        "CustomData": "${custom_data}"</#if><#if destination_arn?has_content>,
+        "DestinationArn": "${destination_arn}"</#if><#if events?has_content>,
+        "Events": [
     <#list events as event>
-          "${event}"
+          "${event}"<#if !event?is_last>,</#if>
     </#list>
         ]</#if>
       }

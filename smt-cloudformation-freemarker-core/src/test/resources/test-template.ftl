@@ -38,26 +38,34 @@ description="test description"
 metadata={"test-metadata-name": "test-metadata-name"}
 parameters=[test_parameter1, test_parameter2]
 mappings={"TestMapping": {"test_map": {"one": 1}}}
-conditions={"TestCondition" : {"Fn::Equals" : [{"Ref" : "TestParameter1"}, "a test value"]}}
+conditions={"TestCondition": {"Fn::Equals": [{"Ref": "TestParameter1"}, "a test value"]}}
 outputs=[test_output1, test_output2]
 >
     <@cf.resource
     name="TestResource1"
     type="AWS::SSM::Parameter"
-    depends_on=["TestResource2"]
+    depends_on=["TestResource2", "TestResource3"]
     condition="TestCondition"
     >
-        "Name" : "test_parameter1",
-        "Type" : "String",
-        "Value" : "a test parameter value"
+        "Name": "test_parameter1",
+        "Type": "String",
+        "Value": "a test parameter value"
     </@cf.resource>
     <@cf.resource
     name="TestResource2"
     type="AWS::SSM::Parameter"
+    >
+        "Name": "test_parameter2",
+        "Type": "String",
+        "Value": "another test parameter value"
+    </@cf.resource>
+    <@cf.resource
+    name="TestResource3"
+    type="AWS::SSM::Parameter"
     last=true
     >
-        "Name" : "test_parameter2",
-        "Type" : "String",
-        "Value" : "another test parameter value"
+        "Name": "test_parameter3",
+        "Type": "String",
+        "Value": "the last test parameter value"
     </@cf.resource>
 </@cf.cloudformation_template_2010_09_09>

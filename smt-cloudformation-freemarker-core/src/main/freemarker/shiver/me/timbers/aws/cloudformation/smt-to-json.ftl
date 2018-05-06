@@ -3,7 +3,7 @@
 {
         <#list object as key, value>
             <#assign map_value><@to_json object=value/></#assign>
-  "${key}" : ${map_value?trim}<#if !key?is_last>,</#if>
+  "${key}": ${map_value?trim}<#if !key?is_last>,</#if>
         </#list>
 }
     <#elseif object?is_enumerable>

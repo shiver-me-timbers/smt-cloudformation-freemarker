@@ -46,7 +46,8 @@
     "TestResource1": {
       "Type": "AWS::SSM::Parameter",
       "DependsOn": [
-        "TestResource2"
+        "TestResource2",
+        "TestResource3"
       ],
       "Condition": "TestCondition",
       "Properties": {
@@ -61,6 +62,14 @@
         "Name": "test_parameter2",
         "Type": "String",
         "Value": "another test parameter value"
+      }
+    },
+    "TestResource3": {
+      "Type": "AWS::SSM::Parameter",
+      "Properties": {
+        "Name": "test_parameter3",
+        "Type": "String",
+        "Value": "the last test parameter value"
       }
     }
   },
@@ -78,4 +87,3 @@
     }
   }
 }
-

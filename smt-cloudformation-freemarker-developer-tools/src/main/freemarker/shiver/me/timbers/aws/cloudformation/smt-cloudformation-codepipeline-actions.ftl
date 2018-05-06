@@ -21,6 +21,7 @@ s3_object_key
 output_artifacts=""
 role_arn=""
 run_order=0
+last=false
 poll_for_source_changes=false
 >
     <#assign action_type_id>
@@ -36,6 +37,7 @@ poll_for_source_changes=false
     action_type_id=action_type_id
     output_artifacts=[output_artifacts]
     role_arn=role_arn
+    last=last
     run_order=run_order
     >
     {
@@ -66,6 +68,7 @@ repository_name
 output_artifacts=""
 role_arn=""
 run_order=0
+last=false
 branch_name="master"
 poll_for_source_changes=false
 >
@@ -82,6 +85,7 @@ poll_for_source_changes=false
     action_type_id=action_type_id
     output_artifacts=[output_artifacts]
     role_arn=role_arn
+    last=last
     run_order=run_order
     >
     {
@@ -116,6 +120,7 @@ oauth_token
 output_artifacts=""
 role_arn=""
 run_order=0
+last=false
 branch="master"
 poll_for_source_changes=false
 >
@@ -132,6 +137,7 @@ poll_for_source_changes=false
     action_type_id=action_type_id
     output_artifacts=[output_artifacts]
     role_arn=role_arn
+    last=last
     run_order=run_order
     >
     {
@@ -162,7 +168,7 @@ poll_for_source_changes=false
   -- @param role_arn: the Amazon Resource Name (ARN) of a service role that the action uses.
   -- @param run_order: the order in which AWS CodePipeline runs this action.
   -- @param capabilities: For stacks that contain certain resources, explicit acknowledgement that AWS CloudFormation
-  --                      might create or update those resources.
+  --                      might create or update those resources. Valid values ("CAPABILITY_IAM", "CAPABILITY_NAMED_IAM").
   -- @param changeset_name: the name of an existing change set or a new change set that you want to create for the
   --                        specified stack.
   -- @param template_path: the location of an AWS CloudFormation template file, which follows the format
@@ -183,6 +189,7 @@ input_artifacts=[]
 output_artifacts=""
 role_arn=""
 run_order=0
+last=false
 capabilities=""
 changeset_name=""
 template_path=""
@@ -204,6 +211,7 @@ role_arn=""
     input_artifacts=input_artifacts
     output_artifacts=[output_artifacts]
     role_arn=role_arn
+    last=last
     run_order=run_order
     >
         <#assign parameter_overrides>
@@ -246,6 +254,7 @@ input_artifacts=""
 output_artifacts=""
 role_arn=""
 run_order=0
+last=false
 >
     <#assign action_type_id>
         <@cp.code_pipeline_stage_action_type_id
@@ -262,6 +271,7 @@ run_order=0
     output_artifacts=[output_artifacts]
     role_arn=role_arn
     run_order=run_order
+    last=last
     >
     {
       "ProjectName": "${project_name}"
@@ -289,6 +299,7 @@ deployment_group_name
 input_artifacts=""
 role_arn=""
 run_order=0
+last=false
 >
     <#assign action_type_id>
         <@cp.code_pipeline_stage_action_type_id
@@ -304,6 +315,7 @@ run_order=0
     input_artifacts=[input_artifacts]
     role_arn=role_arn
     run_order=run_order
+    last=last
     >
     {
       "ApplicationName": "${application_name}",
@@ -332,6 +344,7 @@ environment_name
 input_artifacts=""
 role_arn=""
 run_order=0
+last=false
 >
     <#assign action_type_id>
         <@cp.code_pipeline_stage_action_type_id
@@ -347,6 +360,7 @@ run_order=0
     input_artifacts=[input_artifacts]
     role_arn=role_arn
     run_order=run_order
+    last=last
     >
     {
       "ApplicationName": "${application_name}",
@@ -378,6 +392,7 @@ input_artifacts=[]
 output_artifacts=[]
 role_arn=""
 run_order=0
+last=false
 user_parameters=""
 >
     <#assign action_type_id>
@@ -395,6 +410,7 @@ user_parameters=""
     output_artifacts=output_artifacts
     role_arn=role_arn
     run_order=run_order
+    last=last
     >
     {
       "FunctionName": "${function_name}"<#if user_parameters?has_content>,
@@ -424,6 +440,7 @@ app
 input_artifacts=""
 role_arn=""
 run_order=0
+last=false
 layer=""
 >
     <#assign action_type_id>
@@ -440,6 +457,7 @@ layer=""
     input_artifacts=[input_artifacts]
     role_arn=role_arn
     run_order=run_order
+    last=last
     >
     {
       "Stack": "${stack}",
@@ -470,6 +488,7 @@ service_name
 input_artifacts=""
 role_arn=""
 run_order=0
+last=false
 file_name=""
 >
     <#assign action_type_id>
@@ -486,6 +505,7 @@ file_name=""
     input_artifacts=[input_artifacts]
     role_arn=role_arn
     run_order=run_order
+    last=last
     >
     {
       "ClusterName": "${cluster_name}",
@@ -520,6 +540,7 @@ input_artifacts=[]
 output_artifacts=[]
 role_arn=""
 run_order=0
+last=false
 >
     <#assign action_type_id>
         <@cp.code_pipeline_stage_action_type_id
@@ -536,6 +557,7 @@ run_order=0
     output_artifacts=output_artifacts
     role_arn=role_arn
     run_order=run_order
+    last=last
     >
     {
       "ProjectName": "${project_name}"
@@ -551,9 +573,10 @@ run_order=0
   -- @param name: the action name.
   -- @param run_order: the order in which AWS CodePipeline runs this action.
   -->
-<#macro code_pipeline_stage_action_jenkins
+<#macro code_pipeline_stage_action_manual
 name
 run_order=0
+last=false
 >
     <#assign action_type_id>
         <@cp.code_pipeline_stage_action_type_id
@@ -567,5 +590,6 @@ run_order=0
     name=name
     action_type_id=action_type_id
     run_order=run_order
+    last=last
     />
 </#macro>

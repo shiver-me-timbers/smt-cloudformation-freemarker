@@ -55,24 +55,28 @@ tags=[]
 >
     <@cf.resource
     name=name
-    type="AWS::CodeCommit::Repository"
+    type="AWS::CodeBuild::Project"
     depends_on=depends_on
     condition=condition
     last=last
     >
-    "Name" : "${build_name}",
-    "Source" : ${source},
-    "Environment" : ${environment},
-    "ServiceRole" : "${service_role}",
-    "Artifacts" : ${artifacts}<#if badge_enabled>,
-    "BadgeEnabled" : ${badge_enabled?c}</#if><#if cache?has_content>,
-    "Cache" : ${cache}</#if><#if description?has_content>,
-    "Description" : "${description}"</#if><#if encryption_key?has_content>,
-    "EncryptionKey" : "${encryption_key}"</#if><#if timeout_in_minutes gt 0>,
-    "TimeoutInMinutes" : ${timeout_in_minutes}</#if><#if triggers?has_content>,
-    "Triggers" : ${triggers}</#if><#if vpc_config?has_content>,
-    "VpcConfig" : ${vpc_config}</#if><#if tags?has_content>,
-    "Tags" : [ Resource Tag, ... ]</#if>
+    "Name": "${build_name}",
+    "Source": ${source},
+    "Environment": ${environment},
+    "ServiceRole": "${service_role}",
+    "Artifacts": ${artifacts}<#if badge_enabled>,
+    "BadgeEnabled": ${badge_enabled?c}</#if><#if cache?has_content>,
+    "Cache": ${cache}</#if><#if description?has_content>,
+    "Description": "${description}"</#if><#if encryption_key?has_content>,
+    "EncryptionKey": "${encryption_key}"</#if><#if timeout_in_minutes gt 0>,
+    "TimeoutInMinutes": ${timeout_in_minutes}</#if><#if triggers?has_content>,
+    "Triggers": ${triggers}</#if><#if vpc_config?has_content>,
+    "VpcConfig": ${vpc_config}</#if><#if tags?has_content>,
+    "Tags": [
+    <#list tags as tag>
+        ${tag}
+    </#list>
+    ]</#if>
     </@cf.resource>
 </#macro>
 
@@ -104,10 +108,10 @@ tags=[]
     </#assign>
     <#assign build_spec = build_spec?remove_ending("\n")>
 {
-  "Type" : "${type}"<#if location?has_content>,
-  "Location" : "${location}"</#if><#if git_clone_depth?has_content>,
-  "GitCloneDepth" : ${git_clone_depth}</#if>,
-  "BuildSpec" : <#if !build_spec?contains("\n")>"${build_spec}",<#else>{
+  "Type": "${type}"<#if location?has_content>,
+  "Location": "${location}"</#if><#if git_clone_depth?has_content>,
+  "GitCloneDepth": ${git_clone_depth}</#if>,
+  "BuildSpec": <#if !build_spec?contains("\n")>"${build_spec}",<#else>{
     "Fn::Join": [
       "\n",
       [
@@ -118,10 +122,10 @@ tags=[]
     ]
   }
 </#if><#if insecure_ssl>,
-  "InsecureSsl" : ${insecure_ssl?c}</#if><#if auth_type?has_content>,
-  "Auth" : {
-    "Type" : "${auth_type}",
-    "Resource" : "${auth_resource}"
+  "InsecureSsl": ${insecure_ssl?c}</#if><#if auth_type?has_content>,
+  "Auth": {
+    "Type": "${auth_type}",
+    "Resource": "${auth_resource}"
   }
 </#if>
 }
@@ -146,13 +150,13 @@ tags=[]
         <#nested>
     </#assign>
 {
-  "Type" : "${type}",
-  "ComputeType" : "${compute_type}",
-  "Image" : "${image}"<#if environment_variables?has_content>,
-  "EnvironmentVariables" : [
+  "Type": "${type}",
+  "ComputeType": "${compute_type}",
+  "Image": "${image}"<#if environment_variables?has_content>,
+  "EnvironmentVariables": [
     ${environment_variables}
   ]</#if><#if privileged_mode>,
-  "PrivilegedMode" : ${privileged_mode?c}
+  "PrivilegedMode": ${privileged_mode?c}
 </#if>
 }
 </#macro>
@@ -168,9 +172,9 @@ tags=[]
   -->
 <#macro code_build_environment_variable name value type="PLAINTEXT">
 {
-  "Name" : "${name}",
-  "Value" : "${value}",
-  "Type" : "${type}"
+  "Name": "${name}",
+  "Value": "${value}",
+  "Type": "${type}"
 }
 </#macro>
 
@@ -191,12 +195,12 @@ tags=[]
   -->
 <#macro code_build_artifacts type name="" location="" packaging="" path="" namespace_type="">
 {
-  "Type" : "${type}"<#if name?has_content>,
-  "Name" : "${name}"</#if><#if location?has_content>,
-  "Location" : "${location}"</#if><#if packaging?has_content>,
-  "Packaging" : "${packaging}"</#if><#if path?has_content>,
-  "Path" : "${path}"</#if><#if namespace_type?has_content>,
-  "NamespaceType" : "${namespace_type}"</#if>
+  "Type": "${type}"<#if name?has_content>,
+  "Name": "${name}"</#if><#if location?has_content>,
+  "Location": "${location}"</#if><#if packaging?has_content>,
+  "Packaging": "${packaging}"</#if><#if path?has_content>,
+  "Path": "${path}"</#if><#if namespace_type?has_content>,
+  "NamespaceType": "${namespace_type}"</#if>
 }
 </#macro>
 
@@ -211,8 +215,8 @@ tags=[]
   -->
 <#macro code_build_cache type location="">
 {
-  "Type" : "${type}"<#if location?has_content>,
-  "Location" : "${location}"
+  "Type": "${type}"<#if location?has_content>,
+  "Location": "${location}"
 </#if>
 }
 </#macro>
@@ -228,7 +232,7 @@ tags=[]
 <#macro code_build_triggers webhook=false>
       {
     <#if webhook>
-        "Webhook" : ${webhook?c}
+        "Webhook": ${webhook?c}
     </#if>
       }
 </#macro>
@@ -244,13 +248,13 @@ tags=[]
   -->
 <#macro code_build_vpc_config vpc_id subnet_ids security_group_ids>
 {
-  "VpcId" : "${vpc_id}",
-  "Subnets" : [
+  "VpcId": "${vpc_id}",
+  "Subnets": [
     <#list subnet_ids as subnet_id>
     "${subnet_id}"<#if !subnet_id?is_last>,</#if>
     </#list>
   ],
-  "SecurityGroupIds" : [
+  "SecurityGroupIds": [
     <#list security_group_ids as security_group_id>
     "${security_group_id}"<#if !security_group_id?is_last>,</#if>
     </#list>

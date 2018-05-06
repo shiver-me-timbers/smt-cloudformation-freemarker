@@ -132,7 +132,7 @@ last=false
     <#if depends_on?has_content>
       "DependsOn": [
         <#list depends_on as dependency>
-            "${dependency}"
+            "${dependency}"<#if !dependency?is_last>,</#if>
         </#list>
       ],
     </#if>
@@ -179,7 +179,7 @@ last=false
 
 <#macro tag key value>
     {
-      "Key" : "${key}",
-      "Value" : "${value}"
+      "Key": "${key}",
+      "Value": "${value}"
     }
 </#macro>
